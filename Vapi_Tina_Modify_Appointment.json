@@ -1,0 +1,749 @@
+{
+  "name": "Vapi_Tina_Modify_Appointment",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "4578999f-488e-4429-a782-e03bd6ba1321",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        -40
+      ],
+      "id": "833e1bc3-25a3-4d41-bb73-5c312af358fb",
+      "name": "Webhook",
+      "webhookId": "4578999f-488e-4429-a782-e03bd6ba1321"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=The calendar ID is: {{ $json.id }}\nThe date and time of the new reservation is: {{ $('Webhook').item.json.body.message.toolCalls[0].function.arguments['New Date and Time'] }} ",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "# Overview\nYour job is to modify existing appointments.\n\n#Tools\nUpdate Event Tool - Use this tool to update the appointment\n\n#Rules\nUse the Calendar ID that is specified to update the appointment.\nAll appointments are 30 minutes long.\n\n#Output\nOnly output: \"Appointment has been updated\" or \"Unable to update the Appointment\" nothing else."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        180,
+        -60
+      ],
+      "id": "8bd07e24-0629-4d04-92fe-08253a3953df",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        60,
+        160
+      ],
+      "id": "2d28a4e3-828b-402e-8b28-485cf8af5bbf",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "0K5lHP3Z1gUQPYFa",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "calendar": {
+          "__rl": true,
+          "value": "lahoodreservations@gmail.com",
+          "mode": "list",
+          "cachedResultName": "lahoodreservations@gmail.com"
+        },
+        "eventId": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Event_ID', ``, 'string') }}",
+        "updateFields": {
+          "description": "={{ $('Webhook').item.json.body.message.toolCalls[0].function.arguments.Name }}\n{{ $('Webhook').item.json.body.message.toolCalls[0].function.arguments['Phone Number'] }}\n{{ $('Webhook').item.json.body.message.toolCalls[0].function.arguments['Email Address'] }}\n\n",
+          "end": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('End', ``, 'string') }}",
+          "guestsCanModify": true,
+          "start": "={{ $('Webhook').item.json.body.message.toolCalls[0].function.arguments['New Date and Time'] }}",
+          "summary": "=AI Receptionist Demo with {{ $('Webhook').item.json.body.message.toolCalls[0].function.arguments.Name }}\n"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        340,
+        160
+      ],
+      "id": "bb02ee41-a12c-43b3-9073-3e36de98480a",
+      "name": "Google Calendar1",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "woBeX6tmq7f99wYf",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n    \"results\": [\n        {\n            \"toolCallId\": \"{{ $('Webhook').item.json.body.message.toolCalls[0].id }}\",\n            \"result\": \"{{ $json.output }}\"\n        }\n    ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        580,
+        -60
+      ],
+      "id": "7763af12-4df1-4c83-9b41-39511720b9a7",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "lahoodreservations@gmail.com",
+          "mode": "list",
+          "cachedResultName": "lahoodreservations@gmail.com"
+        },
+        "returnAll": true,
+        "timeMax": "={{ $now.plus({ week: 52 }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        -340,
+        -40
+      ],
+      "id": "585374f8-e22a-4b01-9960-6ade6f294695",
+      "name": "Google Calendar2",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "woBeX6tmq7f99wYf",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b262d868-d610-49a7-9e06-1485861b2490",
+              "leftValue": "={{ $json.attendees[0].email }}",
+              "rightValue": "={{ $('Webhook').item.json.body.message.toolCallList[0].function.arguments['Email Address'] }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "78d6a7bf-8f6d-4a20-af2a-cfc07a84f957",
+              "leftValue": "={{ $json.start.dateTime }}",
+              "rightValue": "={{ $('Webhook').item.json.body.message.toolCallList[0].function.arguments['Date and Time'] }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -120,
+        -40
+      ],
+      "id": "7c21bee0-6922-4a4a-aaf8-d3317ce84fad",
+      "name": "If"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "ottamate.app.n8n.cloud",
+            "user-agent": "axios/1.7.7",
+            "content-length": "12706",
+            "accept": "application/json, text/plain, */*",
+            "accept-encoding": "gzip, br",
+            "baggage": "sentry-environment=production,sentry-public_key=a0021577936aec367b16615ad816c078,sentry-trace_id=3cac7e54a03b4254a886f4c2430f1c3c",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "34.212.224.93",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "US",
+            "cf-ray": "9179c776877ffefd-PDX",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "cookie": "callId=3908b1f4-bec7-4f6f-8f39-60a96fad28b7",
+            "sentry-trace": "3cac7e54a03b4254a886f4c2430f1c3c-84cc2bc87595ae3a",
+            "traceparent": "00-67be0cc60000000059a06e58136f9a93-59a06e58136f9a93-00",
+            "tracestate": "dd=t.tid:67be0cc600000000;t.dm:-1;s:0;p:59a06e58136f9a93",
+            "x-datadog-parent-id": "6458283190211549843",
+            "x-datadog-sampling-priority": "0",
+            "x-datadog-tags": "_dd.p.tid=67be0cc600000000",
+            "x-datadog-trace-id": "6458283190211549843",
+            "x-forwarded-for": "34.212.224.93, 172.68.174.245",
+            "x-forwarded-host": "ottamate.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-24-5cd9cc5d7f-h9dnz",
+            "x-is-trusted": "yes",
+            "x-real-ip": "34.212.224.93",
+            "x-vapi-secret": ""
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "message": {
+              "timestamp": 1740508358011,
+              "type": "tool-calls",
+              "toolCalls": [
+                {
+                  "id": "call_tp0sLN7Ou98h5cKhbOsFG7Tk",
+                  "type": "function",
+                  "function": {
+                    "name": "updateAppointment",
+                    "arguments": {
+                      "Name": "Tim Scott",
+                      "Phone Number": "415-822-4242",
+                      "Date and Time": "2025-02-25T13:30:00-07:00",
+                      "Email Address": "tim@tim.com",
+                      "New Date and Time": "2025-02-25T14:00:00-07:00"
+                    }
+                  }
+                }
+              ],
+              "toolCallList": [
+                {
+                  "id": "call_tp0sLN7Ou98h5cKhbOsFG7Tk",
+                  "type": "function",
+                  "function": {
+                    "name": "updateAppointment",
+                    "arguments": {
+                      "Name": "Tim Scott",
+                      "Phone Number": "415-822-4242",
+                      "Date and Time": "2025-02-25T13:30:00-07:00",
+                      "Email Address": "tim@tim.com",
+                      "New Date and Time": "2025-02-25T14:00:00-07:00"
+                    }
+                  }
+                }
+              ],
+              "toolWithToolCallList": [
+                {
+                  "type": "function",
+                  "function": {
+                    "name": "updateAppointment",
+                    "async": false,
+                    "parameters": {
+                      "type": "object",
+                      "properties": {
+                        "Name": {
+                          "type": "string",
+                          "description": "Name of the person on the appointment"
+                        },
+                        "Phone Number": {
+                          "type": "string",
+                          "description": "The attendees phone number"
+                        },
+                        "Date and Time": {
+                          "type": "string",
+                          "description": "Date and Time of the current appointment"
+                        },
+                        "Email Address": {
+                          "type": "string",
+                          "description": "Email Address of the person with the appointment"
+                        },
+                        "New Date and Time": {
+                          "type": "string",
+                          "description": "The date and time of the new reservation"
+                        }
+                      }
+                    },
+                    "description": "Used to modify an existing appointment"
+                  },
+                  "async": false,
+                  "server": {
+                    "url": "https://ottamate.app.n8n.cloud/webhook-test/4578999f-488e-4429-a782-e03bd6ba1321",
+                    "timeoutSeconds": 30
+                  },
+                  "messages": [],
+                  "toolCall": {
+                    "id": "call_tp0sLN7Ou98h5cKhbOsFG7Tk",
+                    "type": "function",
+                    "function": {
+                      "name": "updateAppointment",
+                      "arguments": {
+                        "Name": "Tim Scott",
+                        "Phone Number": "415-822-4242",
+                        "Date and Time": "2025-02-25T13:30:00-07:00",
+                        "Email Address": "tim@tim.com",
+                        "New Date and Time": "2025-02-25T14:00:00-07:00"
+                      }
+                    }
+                  }
+                }
+              ],
+              "artifact": {
+                "messages": [
+                  {
+                    "role": "system",
+                    "message": "You are a helpful assistant responsible for booking, canceling, and modifying appointments. For every appointment request, always collect the caller’s name, email, phone number, and the desired date and time. Ensure the time is converted to ISO 8601 format.\n\nBooking Appointments:\nTool: Use only the bookCalendar2 tool to check appointment availability and to book appointments.\nProcess:\nCheck if the requested 30-minute time slot is available using bookCalendar2.\nIf the slot is available, proceed to book the appointment with bookCalendar2.\nIf the slot is unavailable, do not book; instead, apologize and inform the caller that someone will follow up shortly.\n\nCanceling Appointments:\nTool: Use only the cancelAppointment tool to cancel an appointment.\n\nModifying and Changing Appointments:\nTool: Use only the updateAppointment tool with date and time of the current reservation to modify or change an existing appointment.\n\nAdditional Context:\nWorking Hours: Meetings are available from 9:00 AM to...",
+                    "time": 1740508322990,
+                    "secondsFromStart": 0
+                  },
+                  {
+                    "role": "bot",
+                    "message": "Hello. How can I help you today?",
+                    "time": 1740508324391,
+                    "endTime": 1740508326141,
+                    "secondsFromStart": 1.12,
+                    "duration": 1750,
+                    "source": ""
+                  },
+                  {
+                    "role": "user",
+                    "message": "Yeah. Hi. Um, I needed to, um, update my appointment My name is Tim Scott. My, uh, email is tim at tim dot com.",
+                    "time": 1740508327911,
+                    "endTime": 1740508340351,
+                    "secondsFromStart": 4.64,
+                    "duration": 10239.99951171875
+                  },
+                  {
+                    "role": "bot",
+                    "message": "Sure.",
+                    "time": 1740508341261,
+                    "endTime": 1740508341761,
+                    "secondsFromStart": 17.99,
+                    "duration": 500,
+                    "source": ""
+                  },
+                  {
+                    "role": "user",
+                    "message": "And my phone number is, uh, 4 1 5 8 2 2 4 2 4 2. And, um, my my appointment was at 1 30 today, but I needed to make it for 2 o'clock.",
+                    "time": 1740508341630.999,
+                    "endTime": 1740508355271,
+                    "secondsFromStart": 18.359999,
+                    "duration": 12090.0029296875
+                  },
+                  {
+                    "toolCalls": [
+                      {
+                        "id": "call_tp0sLN7Ou98h5cKhbOsFG7Tk",
+                        "type": "function",
+                        "function": {
+                          "name": "updateAppointment",
+                          "arguments": "{\n  \"Name\": \"Tim Scott\",\n  \"Phone Number\": \"415-822-4242\",\n  \"Date and Time\": \"2025-02-25T13:30:00-07:00\",\n  \"Email Address\": \"tim@tim.com\",\n  \"New Date and Time\": \"2025-02-25T14:00:00-07:00\"\n}"
+                        }
+                      }
+                    ],
+                    "role": "tool_calls",
+                    "message": "",
+                    "time": 1740508358007,
+                    "secondsFromStart": 32.928
+                  }
+                ],
+                "messagesOpenAIFormatted": [
+                  {
+                    "role": "system",
+                    "content": "You are a helpful assistant responsible for booking, canceling, and modifying appointments. For every appointment request, always collect the caller’s name, email, phone number, and the desired date and time. Ensure the time is converted to ISO 8601 format.\n\nBooking Appointments:\nTool: Use only the bookCalendar2 tool to check appointment availability and to book appointments.\nProcess:\nCheck if the requested 30-minute time slot is available using bookCalendar2.\nIf the slot is available, proceed to book the appointment with bookCalendar2.\nIf the slot is unavailable, do not book; instead, apologize and inform the caller that someone will follow up shortly.\n\nCanceling Appointments:\nTool: Use only the cancelAppointment tool to cancel an appointment.\n\nModifying and Changing Appointments:\nTool: Use only the updateAppointment tool with date and time of the current reservation to modify or change an existing appointment.\n\nAdditional Context:\nWorking Hours: Meetings are available from 9:00 AM to..."
+                  },
+                  {
+                    "role": "assistant",
+                    "content": "Hello. How can I help you today?"
+                  },
+                  {
+                    "role": "user",
+                    "content": "Yeah. Hi. Um, I needed to, um, update my appointment My name is Tim Scott. My, uh, email is tim at tim dot com."
+                  },
+                  {
+                    "role": "assistant",
+                    "content": "Sure."
+                  },
+                  {
+                    "role": "user",
+                    "content": "And my phone number is, uh, 4 1 5 8 2 2 4 2 4 2. And, um, my my appointment was at 1 30 today, but I needed to make it for 2 o'clock."
+                  },
+                  {
+                    "role": "assistant",
+                    "tool_calls": [
+                      {
+                        "id": "call_tp0sLN7Ou98h5cKhbOsFG7Tk",
+                        "type": "function",
+                        "function": {
+                          "name": "updateAppointment",
+                          "arguments": "{\n  \"Name\": \"Tim Scott\",\n  \"Phone Number\": \"415-822-4242\",\n  \"Date and Time\": \"2025-02-25T13:30:00-07:00\",\n  \"Email Address\": \"tim@tim.com\",\n  \"New Date and Time\": \"2025-02-25T14:00:00-07:00\"\n}"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "role": "tool",
+                    "tool_call_id": "call_tp0sLN7Ou98h5cKhbOsFG7Tk",
+                    "content": "Tool Result Still Pending But Proceed Further If Possible."
+                  }
+                ]
+              },
+              "call": {
+                "id": "3908b1f4-bec7-4f6f-8f39-60a96fad28b7",
+                "orgId": "ba2e7079-3a84-4523-b4a7-1582d2c76a20",
+                "createdAt": "2025-02-25T18:32:02.630Z",
+                "updatedAt": "2025-02-25T18:32:02.630Z",
+                "type": "webCall",
+                "monitor": {
+                  "listenUrl": "wss://phone-call-websocket.aws-us-west-2-backend-production3.vapi.ai/3908b1f4-bec7-4f6f-8f39-60a96fad28b7/listen",
+                  "controlUrl": "https://phone-call-websocket.aws-us-west-2-backend-production3.vapi.ai/3908b1f4-bec7-4f6f-8f39-60a96fad28b7/control"
+                },
+                "transport": {
+                  "assistantVideoEnabled": false
+                },
+                "webCallUrl": "https://vapi.daily.co/n4rmMfVLPbH7WgEzyOA3",
+                "status": "queued",
+                "assistantId": "421bf1fa-919f-473a-8509-92d8649a7e5a",
+                "assistantOverrides": {
+                  "clientMessages": [
+                    "transfer-update",
+                    "transcript"
+                  ]
+                }
+              },
+              "assistant": {
+                "id": "421bf1fa-919f-473a-8509-92d8649a7e5a",
+                "orgId": "ba2e7079-3a84-4523-b4a7-1582d2c76a20",
+                "name": "Tina",
+                "voice": {
+                  "model": "eleven_turbo_v2_5",
+                  "voiceId": "neLtsIrQn3iOTuzAOvvA",
+                  "provider": "11labs",
+                  "stability": 0.5,
+                  "similarityBoost": 0.75
+                },
+                "createdAt": "2025-02-21T19:58:42.933Z",
+                "updatedAt": "2025-02-25T18:24:46.161Z",
+                "model": {
+                  "model": "gpt-4o",
+                  "toolIds": [
+                    "7df6ca9a-4e07-4f05-9c76-dcbc27985f18",
+                    "8c3e67e7-2b4f-4e8e-b4c9-0733b9a2bb2c",
+                    "678264db-879d-4a22-8387-becb8cf7ae6e",
+                    "c6582ce2-dca7-49a1-8cf8-450633640873"
+                  ],
+                  "messages": [
+                    {
+                      "role": "system",
+                      "content": "You are a helpful assistant responsible for booking, canceling, and modifying appointments. For every appointment request, always collect the caller’s name, email, phone number, and the desired date and time. Ensure the time is converted to ISO 8601 format.\n\nBooking Appointments:\nTool: Use only the bookCalendar2 tool to check appointment availability and to book appointments.\nProcess:\nCheck if the requested 30-minute time slot is available using bookCalendar2.\nIf the slot is available, proceed to book the appointment with bookCalendar2.\nIf the slot is unavailable, do not book; instead, apologize and inform the caller that someone will follow up shortly.\n\nCanceling Appointments:\nTool: Use only the cancelAppointment tool to cancel an appointment.\n\nModifying and Changing Appointments:\nTool: Use only the updateAppointment tool with date and time of the current reservation to modify or change an existing appointment.\n\nAdditional Context:\nWorking Hours: Meetings are available from 9:00 AM to 2:30 PM (America/Denver).\nCurrent Time: Feb 25, 2025, 11:32 AM"
+                    }
+                  ],
+                  "provider": "openai",
+                  "temperature": 0.7,
+                  "emotionRecognitionEnabled": true,
+                  "tools": [
+                    {
+                      "id": "7df6ca9a-4e07-4f05-9c76-dcbc27985f18",
+                      "createdAt": "2025-02-21T19:22:11.374Z",
+                      "updatedAt": "2025-02-22T08:14:53.968Z",
+                      "type": "function",
+                      "function": {
+                        "name": "bookCalendar2",
+                        "async": false,
+                        "parameters": {
+                          "type": "object",
+                          "properties": {
+                            "Name": {
+                              "type": "string",
+                              "description": "Name of the person."
+                            },
+                            "Phone Number": {
+                              "type": "string",
+                              "description": "Phone number of the person"
+                            },
+                            "Date and Time": {
+                              "type": "string",
+                              "description": "Date and time of the requested appointment"
+                            },
+                            "Email Address": {
+                              "type": "string",
+                              "description": "Email address of the caller"
+                            }
+                          }
+                        },
+                        "description": "Books appointments for the requested time."
+                      },
+                      "messages": [
+                        {
+                          "type": "request-response-delayed",
+                          "content": "Just a minute, the calendar is taking a little longer then usual to load."
+                        }
+                      ],
+                      "orgId": "ba2e7079-3a84-4523-b4a7-1582d2c76a20",
+                      "server": {
+                        "url": "https://ottamate.app.n8n.cloud/webhook/ec56a77a-77fa-46fa-8cf7-ab13d9d3f0df",
+                        "timeoutSeconds": 30
+                      },
+                      "async": false
+                    },
+                    {
+                      "id": "8c3e67e7-2b4f-4e8e-b4c9-0733b9a2bb2c",
+                      "createdAt": "2025-02-24T20:32:04.669Z",
+                      "updatedAt": "2025-02-24T23:12:46.505Z",
+                      "type": "function",
+                      "function": {
+                        "name": "checkCalendar2",
+                        "async": false,
+                        "parameters": {
+                          "type": "object",
+                          "properties": {
+                            "bookCalendar": {
+                              "type": "string",
+                              "description": "Use this function to book an appointment into our calendar."
+                            },
+                            "Date and Time": {
+                              "type": "string",
+                              "description": "Date and time of the requested appointment"
+                            },
+                            "checkCalendar2": {
+                              "type": "string",
+                              "description": "Use this tool to check the calendar for available times"
+                            }
+                          }
+                        },
+                        "description": "Checks the calendar for available time slots."
+                      },
+                      "messages": [
+                        {
+                          "type": "request-start",
+                          "content": "Ok cool let me check the calendar"
+                        },
+                        {
+                          "type": "request-response-delayed",
+                          "content": "Just a minute, the calendar is taking a little longer then usual to load."
+                        }
+                      ],
+                      "orgId": "ba2e7079-3a84-4523-b4a7-1582d2c76a20",
+                      "server": {
+                        "url": "https://ottamate.app.n8n.cloud/webhook/ec56a77a-77fa-46fa-8cf7-ab13d9d3f0df",
+                        "timeoutSeconds": 30
+                      },
+                      "async": false
+                    },
+                    {
+                      "id": "678264db-879d-4a22-8387-becb8cf7ae6e",
+                      "createdAt": "2025-01-28T21:48:48.622Z",
+                      "updatedAt": "2025-02-25T17:33:30.268Z",
+                      "type": "function",
+                      "function": {
+                        "name": "cancelAppointment",
+                        "async": false,
+                        "parameters": {
+                          "type": "object",
+                          "properties": {
+                            "Name": {
+                              "type": "string",
+                              "description": "Name for the appointment"
+                            },
+                            "Date and Time": {
+                              "type": "string",
+                              "description": "Date and Time of the appointment"
+                            },
+                            "Email Address": {
+                              "type": "string",
+                              "description": "Email Address for the appointment"
+                            },
+                            "cancelAppointment": {
+                              "type": "string",
+                              "description": "Cancels an appointment for the caller"
+                            }
+                          }
+                        },
+                        "description": "Look into the calendar and cancel the appointment for the caller."
+                      },
+                      "messages": [
+                        {
+                          "type": "request-start",
+                          "content": "Ok cool let me check the calendar"
+                        },
+                        {
+                          "type": "request-response-delayed",
+                          "content": "Just a minute, the calendar is taking a little longer then usual to load."
+                        }
+                      ],
+                      "orgId": "ba2e7079-3a84-4523-b4a7-1582d2c76a20",
+                      "server": {
+                        "url": "https://ottamate.app.n8n.cloud/webhook/cbb82cee-1911-479e-a783-dd87df3170aa",
+                        "timeoutSeconds": 30
+                      },
+                      "async": false
+                    },
+                    {
+                      "id": "c6582ce2-dca7-49a1-8cf8-450633640873",
+                      "createdAt": "2025-02-25T18:05:20.187Z",
+                      "updatedAt": "2025-02-25T18:28:58.322Z",
+                      "type": "function",
+                      "function": {
+                        "name": "updateAppointment",
+                        "async": false,
+                        "parameters": {
+                          "type": "object",
+                          "properties": {
+                            "Name": {
+                              "type": "string",
+                              "description": "Name of the person on the appointment"
+                            },
+                            "Phone Number": {
+                              "type": "string",
+                              "description": "The attendees phone number"
+                            },
+                            "Date and Time": {
+                              "type": "string",
+                              "description": "Date and Time of the current appointment"
+                            },
+                            "Email Address": {
+                              "type": "string",
+                              "description": "Email Address of the person with the appointment"
+                            },
+                            "New Date and Time": {
+                              "type": "string",
+                              "description": "The date and time of the new reservation"
+                            }
+                          }
+                        },
+                        "description": "Used to modify an existing appointment"
+                      },
+                      "orgId": "ba2e7079-3a84-4523-b4a7-1582d2c76a20",
+                      "server": {
+                        "url": "https://ottamate.app.n8n.cloud/webhook-test/4578999f-488e-4429-a782-e03bd6ba1321",
+                        "timeoutSeconds": 30
+                      },
+                      "async": false
+                    }
+                  ]
+                },
+                "firstMessage": "Hello, How can I help you today?",
+                "clientMessages": [
+                  "transcript",
+                  "function-call",
+                  "conversation-update",
+                  "transfer-update"
+                ],
+                "serverMessages": [
+                  "tool-calls"
+                ],
+                "serverUrl": "https://ottamate.app.n8n.cloud/webhook/ec56a77a-77fa-46fa-8cf7-ab13d9d3f0df",
+                "hipaaEnabled": false,
+                "backchannelingEnabled": false,
+                "backgroundDenoisingEnabled": false
+              }
+            }
+          },
+          "webhookUrl": "https://ottamate.app.n8n.cloud/webhook-test/4578999f-488e-4429-a782-e03bd6ba1321",
+          "executionMode": "test"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Google Calendar2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar2": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "bddfdc85-9d73-4c14-8e12-409fbfadbb66",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2e413c2d31a096100e16efa9cb4834e1ddd059db88a82682950ec1aef617d09f"
+  },
+  "id": "ed5MvarpewZOiBZj",
+  "tags": []
+}

@@ -1,0 +1,247 @@
+{
+  "name": "nahi_assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "762ababc-dd11-44e8-94d8-46faba91cb88",
+      "name": "Telegram Trigger",
+      "webhookId": "6a442bd6-7068-4a84-99e6-fb06fa1d86e3",
+      "credentials": {
+        "telegramApi": {
+          "id": "RzWxUBcK5IKkUx1Y",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=## Role\n\nGo to the Wikipedia, google serp and hacker news and send me the popular and impactful top 5 new top news or jocks or contents or releases or any impactful new things(one of them) which are 1 day befor or less from {{$now}} that are sutbale to create that help me to create a content for Facebook, tiktok and youtube about  {{ $json.message.text }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "fa3c2ae7-f213-4919-b510-0393a293b87d",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        580,
+        0
+      ],
+      "id": "89d4bd71-93f3-4c29-845e-9b331565f3ce",
+      "name": "Send a text message",
+      "webhookId": "075ad1cd-f668-4bed-9231-413fbe3175e8",
+      "notesInFlow": false,
+      "executeOnce": false,
+      "alwaysOutputData": false,
+      "credentials": {
+        "telegramApi": {
+          "id": "uj1tgHHwa9aATu25",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+        "contextWindowLength": 25
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        200,
+        240
+      ],
+      "id": "809eb32f-7d7d-4126-b06a-90668926728f",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolWikipedia",
+      "typeVersion": 1,
+      "position": [
+        300,
+        240
+      ],
+      "id": "e1a05b7c-8966-44d1-8a86-1ba910e8f515",
+      "name": "Wikipedia"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Get many items in Hacker News",
+        "resource": "all",
+        "limit": 10,
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.hackerNewsTool",
+      "typeVersion": 1,
+      "position": [
+        400,
+        240
+      ],
+      "id": "bf69c20f-ed24-4a3a-90a1-6021060eaa34",
+      "name": "Get many items in Hacker News"
+    },
+    {
+      "parameters": {
+        "options": {
+          "google_domain": "google.com"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "typeVersion": 1,
+      "position": [
+        520,
+        240
+      ],
+      "id": "20df424a-f2ae-4864-ada6-88b7690c97cd",
+      "name": "SerpAPI",
+      "credentials": {
+        "serpApi": {
+          "id": "7eoDmMs2ETd1wyyD",
+          "name": "SerpAPI account 7"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        60,
+        240
+      ],
+      "id": "3e20dcd0-ccd8-442c-a5f3-919e3dc2f2c9",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "4D5VNj9cYdcHPHIY",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wikipedia": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many items in Hacker News": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SerpAPI": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "99728cc4-cd7d-4417-a4ac-3cfe124021b9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e00d2f44a18f61d3c741b3c6a915b33af149495dc0707b47f1184955d68139ad"
+  },
+  "id": "TW9hDanzKVmT0etN",
+  "tags": []
+}
